@@ -6,6 +6,7 @@
 package frc.robot;
 
 import edu.wpi.first.wpilibj.XboxController;
+import edu.wpi.first.wpilibj.XboxController.Button;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.button.JoystickButton;
 import frc.robot.subsystems.SuperStructure;
@@ -59,12 +60,34 @@ public class RobotContainer {
     superStructure.setDefaultCommand(superStructure.new IdleCommand(operator::getTriggerAxis));
   }
 
+  /**
+   * Using the pressed released method with the inline joystick button creation allows for
+   * more flexible button bindings. Buttons dont actually need to be given a name as long as they exist.
+   * 
+   * For this application with such a basic shooter design/code implementation this is WAY overkill.
+   * The old button binding/command system would have worked just as well given that we dont need any complex
+   * sequencing or precision control. If we ran the shooter with some sort of rpm control we could use the capabilties
+   * of running a sequential command group to ramp upthe shooter while also potentially running the auto targeting code.
+   * In that specific example you would want the command for this to be located inside of superstructure so that it can
+   * access the drivetrain.
+   * 
+   * Also another thing to keep in mind is that whenPressed only runs the stuff once. Which in this case works perfectly
+   * because when a motor is set it will maintain that speed until a different set is called. This is the main reason why the
+   * LazyTalonSRX is a thing. It slightly lowers the data usage on the CAN Bus. I would also like to try and mess with CAN Frames
+   * in the coming season aswell, however I need to do more research on the subject to not mess anything up. And in the end if the
+   * CAN bus usage is managable at the end of the day it wont be needed. I wont even use the Lazy classes unless they are needed.
+   * 
+   * In a case where you need things to run in execute you would have to bake that loop somewhere else which is defiantly possible
+   * 
+   * I know this stuff all seems a bit too complicated given that I wrote a thing on how the best solution is the simplest one.
+   * However I have big aspirations to do more advanced things as much as possible in order for everyone to learn how to do them.
+   * 
+   */
   private void configureButtonBindings() {
-
-    JoystickButton mRightBumper = new JoystickButton(operator, 6);
-    
-    mRightBumper.whenHeld(new Shooter.runShooter (shooter, Constants.OuttakeSpeed));
-
+    new JoystickButton(operator, Button.kBumperRight.value)
+      .whenHeld(shooter.new ShootCommand())
+      .whenReleased(shooter.new DisableCommand()
+    );
   }
 
   public Command getAutonomousCommand() {
